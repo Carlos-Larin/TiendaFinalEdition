@@ -26,7 +26,9 @@ public class AdaptadorProductos extends BaseAdapter {
     @Override
     public Object getItem(int i) {return datosProductosArrayList.get(i);}
     @Override
-    public long getItemId(int i) {return Long.parseLong(datosProductosArrayList.get(i).getIdProducto());}
+    public long getItemId(int i) {
+        return i;//Long.parseLong(datosProductosArrayList.get(i).getIdProducto());}
+    }
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
