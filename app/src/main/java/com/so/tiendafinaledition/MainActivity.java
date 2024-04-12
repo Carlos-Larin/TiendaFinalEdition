@@ -1,65 +1,62 @@
 package com.so.tiendafinaledition;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 
-import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
-import com.so.tiendafinaledition.DB;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import org.json.JSONObject;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
-    Button btnGuardarProducto;
-    FloatingActionButton fabListarProductos;
+    Button btn;
+    FloatingActionButton fab;
     TextView tempVal;
     String accion = "nuevo";
-    String id="";
+    String id="", rev="", idProducto="";
     String urlCompletaFoto;
     Intent tomarFotoIntent;
     ImageView img;
+    utilidades utls;
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        fabListarProductos = findViewById(R.id.fabListarProductos);
-        fabListarProductos.setOnClickListener(new View.OnClickListener() {
+        utls = new utilidades();
+        fab = findViewById(R.id.fabListarProductos);
+        fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 abrirActividad();
             }
         });
-
-        btnGuardarProducto = findViewById(R.id.btnGuardarProducto);
-        btnGuardarProducto.setOnClickListener(new View.OnClickListener() {
+        btn = findViewById(R.id.btnGuardarProducto);
+        btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
-
                     tempVal = findViewById(R.id.txtMarca);
                     String marca = tempVal.getText().toString();
 
@@ -72,10 +69,35 @@ public class MainActivity extends AppCompatActivity {
                     tempVal = findViewById(R.id.txtPrecio);
                     String precio = tempVal.getText().toString();
 
+                    //guardar datos en el servidor
+                    JSONObject datosProductos = new JSONObject();
+                    if(accion.equals("modificar")){
+                        datosProductos.put("_id", id);
+                        datosProductos.put("_rev", rev);
+                    }
+                    datosProductos.put("idProducto", idProducto);
+                    datosProductos.put("marca", marca);
+                    datosProductos.put("descripcion", descripcion);
+                    datosProductos.put("presentacion", presentacion);
+                    datosProductos.put("precio", precio);
+                    datosProductos.put("urlCompletaFoto", urlCompletaFoto);
+
+                    String respuesta = "";
+                    enviarDatosServidor objGuardarDatosServidor = new enviarDatosServidor(getApplicationContext());
+                    respuesta = objGuardarDatosServidor.execute(datosProductos.toString()).get();
+
+                    JSONObject respuestaJSONObject = new JSONObject(respuesta);
+                    if( respuestaJSONObject.getBoolean("ok") ){
+                        id = respuestaJSONObject.getString("id");
+                        rev = respuestaJSONObject.getString("rev");
+                    }else{
+                        mostrarMsg("Error al guardar datos en el servidor");
+                    }
+
                     DB db = new DB(getApplicationContext(), "",null, 1);
-                    String[] datos = new String[]{id,marca,presentacion,descripcion,precio, urlCompletaFoto};
+                    String[] datos = new String[]{id, rev,idProducto,marca,presentacion,descripcion,precio, urlCompletaFoto};
                     mostrarMsg(accion);
-                    String respuesta = db.administrar_productos(accion, datos);
+                    respuesta = db.administrar_productos(accion, datos);
                     if(respuesta.equals("ok")){
                         Toast.makeText(getApplicationContext(), "Producto guardado con exito", Toast.LENGTH_LONG).show();
                         abrirActividad();
@@ -102,10 +124,14 @@ public class MainActivity extends AppCompatActivity {
         File fotoProducto = null;
         try{
             fotoProducto = crearImagenProducto();
+            if( fotoProducto!=null ){
             Uri uriFotoproducto = FileProvider.getUriForFile(MainActivity.this,
                     "com.so.tiendafinaledition.fileprovider", fotoProducto);
             tomarFotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, uriFotoproducto);
-            startActivityForResult(tomarFotoIntent, 1);
+                startActivityForResult(tomarFotoIntent, 1);
+            }else{
+                mostrarMsg("No se pudo creaar la foto");
+            }
         }catch (Exception e){
             mostrarMsg("Error al abrir la camara: "+ e.getMessage());
         }
@@ -140,32 +166,35 @@ public class MainActivity extends AppCompatActivity {
         try {
             Bundle parametros = getIntent().getExtras();//Recibir los parametros...
             accion = parametros.getString("accion");
-
-            if(accion.equals("modificar")){
-                String[] productos = parametros.getStringArray("productos");
-                id = productos[0];
+            
+            if (accion.equals("modificar")){
+                JSONObject jsonObject = new JSONObject(parametros.getString("productos")).getJSONObject("value");
+                id = jsonObject.getString("_id");
+                rev = jsonObject.getString("_rev");
+                idProducto=jsonObject.getString("idProducto");
 
                 tempVal = findViewById(R.id.txtMarca);
-                tempVal.setText(productos[1]);
+                tempVal.setText(jsonObject.getString("Marca"));
 
                 tempVal = findViewById(R.id.txtDescripcion);
-                tempVal.setText(productos[2]);
+                tempVal.setText(jsonObject.getString("Descripcion"));
 
                 tempVal = findViewById(R.id.txtPresentacion);
-                tempVal.setText(productos[3]);
+                tempVal.setText(jsonObject.getString("Presentacion"));
 
                 tempVal = findViewById(R.id.txtPrecio);
-                tempVal.setText(productos[4]);
-
-                urlCompletaFoto = productos[5]; // Ajusta según la estructura de tus datos
+                tempVal.setText(jsonObject.getString("Precio"));
+                urlCompletaFoto = jsonObject.getString("urlCompletaFoto");
                 Bitmap imageBitmap = BitmapFactory.decodeFile(urlCompletaFoto);
                 img.setImageBitmap(imageBitmap);
+                
+            }else{//nuevo registro
+                idProducto = utls.generarIdUnico();
             }
-        } catch (Exception e) {
+        }catch (Exception e){
             mostrarMsg("Error al mostrar datos: "+ e.getMessage());
         }
     }
-
     private void mostrarMsg(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
