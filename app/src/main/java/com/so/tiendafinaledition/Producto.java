@@ -3,22 +3,21 @@ public class Producto {
     String _id;
     String _rev;
     String idProducto;
-
     String descripcion;
     String marca;
     String presentacion;
     String precio;
     String urlFotoProducto;
 
-    public Producto(String _id, String _rev, String idProducto, String marca, String descripcion, String presentacion, String urlFoto, String urlCompletaFoto) {
+    public Producto(String _id, String _rev, String idProducto, String Marca, String descripcion, String presentacion,String precio, String urlFotoProducto) {
         this._id = _id;
         this._rev = _rev;
         this.idProducto = idProducto;
-        this.marca = marca;
+        this.marca = Marca;
         this.descripcion = descripcion;
         this.presentacion = presentacion;
-        this.precio = String.valueOf(precio);
-        this.urlFotoProducto = urlFoto;
+        this.precio = precio;
+        this.urlFotoProducto = urlFotoProducto;
     }
 
     public String get_id() {
@@ -30,9 +29,7 @@ public class Producto {
     public String get_rev() {
         return _rev;
     }
-    public void set_rev(String _rev) {
-        this._rev = _rev;
-    }
+    public void set_rev(String _rev) {this._rev = _rev;}
 
     public String getUrlFotoProducto() {
         return urlFotoProducto;
