@@ -1,10 +1,7 @@
 package com.so.tiendafinaledition;
-
 import android.os.AsyncTask;
 import android.os.Build;
-
 import androidx.annotation.RequiresApi;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
