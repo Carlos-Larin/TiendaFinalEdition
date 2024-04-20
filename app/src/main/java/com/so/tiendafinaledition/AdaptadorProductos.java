@@ -40,14 +40,14 @@ public class AdaptadorProductos extends BaseAdapter {
             TextView tempVal = itemView.findViewById(R.id.lblNombreProducto);
             tempVal.setText(datosProducto.getMarca());
 
-            tempVal = itemView.findViewById(R.id.lblPrecioProducto);
-            tempVal.setText(datosProducto.getPrecio());
-
             tempVal = itemView.findViewById(R.id.lblDescripcion);
             tempVal.setText(datosProducto.getDescripcion());
 
             tempVal = itemView.findViewById(R.id.lblPresentacion);
             tempVal.setText(datosProducto.getPresentacion());
+
+            tempVal = itemView.findViewById(R.id.lblPrecioProducto);
+            tempVal.setText(datosProducto.getPrecio());
 
             Bitmap imageBitmap = BitmapFactory.decodeFile(datosProducto.getUrlFotoProducto());
             ImageView img = itemView.findViewById(R.id.imgFotoProducto);
