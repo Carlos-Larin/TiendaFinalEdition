@@ -29,7 +29,7 @@
             </intent-filter>
         </activity>
         <provider
-            android:authorities="com.so.TiendaFinalEdition.fileprovider"
+           android:authorities="com.so.tiendafinaledition.fileprovider"
             android:name="androidx.core.content.FileProvider"
             android:exported="false" android:grantUriPermissions="true">
             <meta-data
