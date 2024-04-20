@@ -4,7 +4,6 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
-
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,14 +16,9 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.widget.ImageView;
-import android.widget.RadioGroup;
-import android.widget.Spinner;
 import android.widget.TextView;
-
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 import org.json.JSONObject;
-
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -44,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         utls = new utilidades();
         fab = findViewById(R.id.fabListarProductos);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -93,10 +88,8 @@ public class MainActivity extends AppCompatActivity {
                     }else{
                         mostrarMsg("Error al guardar datos en el servidor");
                     }
-
                     DB db = new DB(getApplicationContext(), "",null, 1);
                     String[] datos = new String[]{id, rev,idProducto,marca,presentacion,descripcion,precio, urlCompletaFoto};
-                    mostrarMsg(accion);
                     respuesta = db.administrar_productos(accion, datos);
                     if(respuesta.equals("ok")){
                         Toast.makeText(getApplicationContext(), "Producto guardado con exito", Toast.LENGTH_LONG).show();
@@ -125,9 +118,9 @@ public class MainActivity extends AppCompatActivity {
         try{
             fotoProducto = crearImagenProducto();
             if( fotoProducto!=null ){
-            Uri uriFotoproducto = FileProvider.getUriForFile(MainActivity.this,
-                    "com.so.tiendafinaledition.fileprovider", fotoProducto);
-            tomarFotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, uriFotoproducto);
+                Uri uriFotoproducto = FileProvider.getUriForFile(MainActivity.this,
+                        "com.so.tiendafinaledition.fileprovider", fotoProducto);
+                tomarFotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, uriFotoproducto);
                 startActivityForResult(tomarFotoIntent, 1);
             }else{
                 mostrarMsg("No se pudo creaar la foto");
@@ -162,11 +155,12 @@ public class MainActivity extends AppCompatActivity {
         return imagen;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void mostrarDatosProducto() {
         try {
             Bundle parametros = getIntent().getExtras();//Recibir los parametros...
             accion = parametros.getString("accion");
-            
+
             if (accion.equals("modificar")){
                 JSONObject jsonObject = new JSONObject(parametros.getString("productos")).getJSONObject("value");
                 id = jsonObject.getString("_id");
@@ -174,20 +168,21 @@ public class MainActivity extends AppCompatActivity {
                 idProducto=jsonObject.getString("idProducto");
 
                 tempVal = findViewById(R.id.txtMarca);
-                tempVal.setText(jsonObject.getString("Marca"));
+                tempVal.setText(jsonObject.getString("marca"));
 
                 tempVal = findViewById(R.id.txtDescripcion);
-                tempVal.setText(jsonObject.getString("Descripcion"));
+                tempVal.setText(jsonObject.getString("descripcion"));
 
                 tempVal = findViewById(R.id.txtPresentacion);
-                tempVal.setText(jsonObject.getString("Presentacion"));
+                tempVal.setText(jsonObject.getString("presentacion"));
 
                 tempVal = findViewById(R.id.txtPrecio);
-                tempVal.setText(jsonObject.getString("Precio"));
+                tempVal.setText(jsonObject.getString("precio"));
+
                 urlCompletaFoto = jsonObject.getString("urlCompletaFoto");
                 Bitmap imageBitmap = BitmapFactory.decodeFile(urlCompletaFoto);
                 img.setImageBitmap(imageBitmap);
-                
+
             }else{//nuevo registro
                 idProducto = utls.generarIdUnico();
             }
