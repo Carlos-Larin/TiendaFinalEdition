@@ -1,6 +1,5 @@
 package com.so.tiendafinaledition;
 
-import android.app.Activity;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,22 +19,19 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.so.tiendafinaledition.DB;
 
 import java.util.ArrayList;
-import java.util.Locale;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import kotlin.contracts.Returns;
 public class agenda_productos extends AppCompatActivity {
     Bundle parametros = new Bundle();
     DB db;
     ListView lts;
     Cursor cProductos;
-    final ArrayList<Producto> alProductos = new ArrayList<>();
-    final ArrayList<Producto> alProductosCopy = new ArrayList<>();
+    final ArrayList<Producto> alProductos = new ArrayList<Producto>();
+    final ArrayList<Producto> alProductosCopy = new ArrayList<Producto>();
     Producto datosProducto;
     FloatingActionButton btn;
     JSONArray datosJSON; //para los datos que vienen del servidor.
@@ -56,6 +52,7 @@ public class agenda_productos extends AppCompatActivity {
                 abrirActividad(parametros);
             }
         });
+
         di = new detectarInternet(getApplicationContext());
         if( di.hayConexionInternet() ){
             obtenerDatosProductosServidor();
@@ -91,10 +88,10 @@ public class agenda_productos extends AppCompatActivity {
                             misDatosJSONObject.getString("_id"),
                             misDatosJSONObject.getString("_rev"),
                             misDatosJSONObject.getString("idProducto"),
-                            misDatosJSONObject.getString("Marca"),
-                            misDatosJSONObject.getString("Descripcion"),
-                            misDatosJSONObject.getString("Presentacion"),
-                            misDatosJSONObject.getString("Precio"),
+                            misDatosJSONObject.getString("marca"),
+                            misDatosJSONObject.getString("descripcion"),
+                            misDatosJSONObject.getString("presentacion"),
+                            misDatosJSONObject.getString("precio"),
                             misDatosJSONObject.getString("urlCompletaFoto")
                     );
                     alProductos.add(datosProducto);
@@ -109,7 +106,7 @@ public class agenda_productos extends AppCompatActivity {
                 mostrarMsg("No hay datos que mostrar");
             }
         }catch (Exception e){
-            mostrarMsg("Error al mostrar datos: "+ e.getMessage());
+            mostrarMsg("Error al mostrar datos agenda_productos aqui ta el error: "+ e.getMessage());
         }
     }
     @Override
@@ -119,9 +116,11 @@ public class agenda_productos extends AppCompatActivity {
         inflater.inflate(R.menu.mimenu, menu);
         try {
             AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-            cProductos.moveToPosition(info.position);
+            posicion = info.position;
             menu.setHeaderTitle("¿Qué deseas hacer con " + datosJSON.getJSONObject(posicion).getJSONObject("value").getString("marca"));
-        }catch (Exception e){mostrarMsg("Error al mostrar el menu: "+ e.getMessage());}
+        }catch (Exception e){
+            mostrarMsg("Error al mostrar el menu: "+ e.getMessage());
+        }
     }
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
@@ -132,12 +131,12 @@ public class agenda_productos extends AppCompatActivity {
                 abrirActividad(parametros);
             } else if (itemId == R.id.mnxModificar) {
                 String[] productos = {
-                        cProductos.getString(0), // idProducto
-                        cProductos.getString(1), // marca
-                        cProductos.getString(2), // presentacion
-                        cProductos.getString(3), // descripcion
-                        cProductos.getString(4), // precio
-                        cProductos.getString(5)  // foto
+                        cProductos.getString(2), // idProducto
+                        cProductos.getString(3), // marca
+                        cProductos.getString(4), // presentacion
+                        cProductos.getString(5), // descripcion
+                        cProductos.getString(6), // precio
+                        cProductos.getString(7)  // foto
                 };
                 parametros.putString("accion", "modificar");
                 parametros.putStringArray("productos", new String[]{datosJSON.getJSONObject(posicion).toString()});
@@ -156,7 +155,6 @@ public class agenda_productos extends AppCompatActivity {
             AlertDialog.Builder confirmar = new AlertDialog.Builder(agenda_productos.this);
             confirmar.setTitle("¿Está seguro de eliminar a: ");
             confirmar.setMessage(datosJSON.getJSONObject(posicion).getJSONObject("value").getString("marca"));
-
             confirmar.setPositiveButton("SI", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
@@ -173,7 +171,6 @@ public class agenda_productos extends AppCompatActivity {
                     }
                 }
             });
-
             confirmar.setNegativeButton("NO", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
@@ -200,12 +197,14 @@ public class agenda_productos extends AppCompatActivity {
                         alProductos.addAll(alProductosCopy);
                     } else {
                         for (Producto producto : alProductosCopy) {
-                            String descripcion = producto.getDescripcion();
                             String marca = producto.getMarca();
+                            String descripcion = producto.getDescripcion();
                             String presentacion = producto.getPresentacion();
-                            if (descripcion.trim().toLowerCase().contains(valor) ||
-                                    marca.trim().toLowerCase().contains(valor)||
-                                    presentacion.trim().toLowerCase().contains(valor)) {
+                            String precio = producto.getPrecio();
+                            if (marca.trim().toLowerCase().contains(valor) ||
+                                    descripcion.trim().toLowerCase().contains(valor) ||
+                                    presentacion.trim().toLowerCase().contains(valor)||
+                                    precio.trim().toLowerCase().contains(valor)) {
                                 alProductos.add(producto);
                             }
                         }
@@ -226,9 +225,9 @@ public class agenda_productos extends AppCompatActivity {
         abrirActividad.putExtras(parametros);
         startActivity(abrirActividad);
     }
-    private void obtenerProductos() {
+    private void obtenerProductos() { //offline
         try {
-            db = new DB(getApplicationContext(), "", null, 1);
+           // db = new DB(getApplicationContext(), "", null, 1);
             cProductos = db.obtener_productos();
             if (cProductos.moveToFirst()) {
                 datosJSON = new JSONArray();
@@ -239,19 +238,20 @@ public class agenda_productos extends AppCompatActivity {
                     jsonObject.put("_id", cProductos.getString(0));
                     jsonObject.put("_rev",cProductos.getString(1));
                     jsonObject.put("idProducto", cProductos.getString(2));
-                    jsonObject.put("Marca", cProductos.getString(3));
-                    jsonObject.put("Descripcion", cProductos.getString(4));
-                    jsonObject.put("Presentacion", cProductos.getString(5));
+                    jsonObject.put("marca", cProductos.getString(3));
+                    jsonObject.put("descripcion", cProductos.getString(4));
+                    jsonObject.put("presentacion", cProductos.getString(5));
                     jsonObject.put("precio", cProductos.getString(6));
                     jsonObject.put("urlCompletaFoto", cProductos.getString(7));
                     jsonObjectValue.put("value", jsonObject);
 
                     datosJSON.put(jsonObjectValue);
                 }while (cProductos.moveToNext());
+                mostrarMsg("Punto");
                 mostrarDatosProductos();
                 AdaptadorProductos adImagenes= new AdaptadorProductos(getApplicationContext(), alProductos);
-                lts.setAdapter(adImagenes);
-                registerForContextMenu(lts);
+               lts.setAdapter(adImagenes);
+               registerForContextMenu(lts);
             } else {
                 parametros.putString("accion", "nuevo");
                 abrirActividad(parametros);
