@@ -2,7 +2,8 @@ package com.so.tiendafinaledition;
 
 import android.content.Context;
 import android.os.AsyncTask;
-
+import android.os.Build;
+import androidx.annotation.RequiresApi;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -20,6 +21,7 @@ public class enviarDatosServidor extends AsyncTask<String, String, String> {
     public enviarDatosServidor(Context context) {
         this.context = context;
     }
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected String doInBackground(String... parametros) {
         String jsonRespuesta = null;
@@ -45,9 +47,9 @@ public class enviarDatosServidor extends AsyncTask<String, String, String> {
             respuesta = bufferedReader.toString();
             //procesamos la respuesta
             String linea;
-            StringBuffer stringBuffer = new StringBuffer();
+            StringBuilder stringBuffer = new StringBuilder();
             while((linea=bufferedReader.readLine())!=null){
-                stringBuffer.append(linea+"\n");
+                stringBuffer.append(linea).append("\n");
             }
             if (stringBuffer.length()==0) return null;
             jsonRespuesta = stringBuffer.toString();
